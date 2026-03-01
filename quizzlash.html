@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quizzlash! — by Gilang Anggara & All Hafiz XII.1</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-deep:     #0d1117;
+      --bg-card:     #161b27;
+      --bg-hover:    #1e2535;
+      --border:      #2a3347;
+      --text-main:   #e2e8f0;
+      --text-muted:  #8b98b1;
+      --accent:      #4f8ef7;
+      --accent-glow: rgba(79,142,247,0.18);
+      --green:       #34d399;
+      --red:         #f87171;
+      --gold:        #fbbf24;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-deep);
+      color: var(--text-main);
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(79,142,247,0.08) 0%, transparent 60%);
+    }
+    .mono { font-family: 'Space Mono', monospace; }
+
+    /* ── PAGE TRANSITIONS ── */
+    .page { display: none; opacity: 0; transform: translateY(12px); transition: opacity .35s ease, transform .35s ease; }
+    .page.active { display: flex; opacity: 1; transform: translateY(0); }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+    .card-glass {
+      background: rgba(22,27,39,0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    /* ── BUTTONS ── */
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 28px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all .2s;
+      box-shadow: 0 0 0 0 var(--accent-glow);
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 24px var(--accent-glow); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 22px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-glow); }
+
+    .btn-menu {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 24px;
+      text-align: left;
+      cursor: pointer;
+      transition: all .25s;
+      color: var(--text-main);
+      font-family: 'Outfit', sans-serif;
+    }
+    .btn-menu:hover { border-color: var(--accent); background: var(--accent-glow); transform: translateX(4px); }
+
+    /* ── TEXTAREA / INPUT ── */
+    textarea, input[type="text"] {
+      width: 100%;
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-main);
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      padding: 14px 16px;
+      outline: none;
+      resize: vertical;
+      transition: border-color .2s;
+    }
+    textarea:focus, input[type="text"]:focus { border-color: var(--accent); }
+    textarea::placeholder { color: var(--text-muted); }
+
+    /* ── LOADING DOTS ── */
+    .dot-flashing { display: flex; gap: 6px; align-items: center; justify-content: center; }
+    .dot-flashing span {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent); animation: dotbounce 1.2s infinite ease-in-out;
+    }
+    .dot-flashing span:nth-child(2) { animation-delay: .2s; }
+    .dot-flashing span:nth-child(3) { animation-delay: .4s; }
+    @keyframes dotbounce { 0%,80%,100%{transform:scale(.7);opacity:.4} 40%{transform:scale(1.1);opacity:1} }
+
+    /* ── HEARTS ── */
+    .heart { font-size: 22px; transition: all .3s; }
+    .heart.lost { opacity: .2; filter: grayscale(1); }
+
+    /* ── BOSS SHAKE / BLINK ── */
+    @keyframes bossShake {
+      0%,100%{transform:translateX(0)}
+      20%{transform:translateX(-10px)}
+      40%{transform:translateX(10px)}
+      60%{transform:translateX(-6px)}
+      80%{transform:translateX(6px)}
+    }
+    @keyframes bossBlink {
+      0%,100%{opacity:1} 25%,75%{opacity:.3}
+    }
+    .boss-shake { animation: bossShake .45s ease; }
+    .boss-blink { animation: bossBlink .45s ease; }
+
+    /* ── PROGRESS BAR ── */
+    .prog-bar { height: 6px; background: var(--border); border-radius: 99px; overflow:hidden; }
+    .prog-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width .4s ease; }
+
+    /* ── ANSWER OPTIONS ── */
+    .opt-btn {
+      width: 100%;
+      background: var(--bg-deep);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      text-align: left;
+      cursor: pointer;
+      color: var(--text-main);
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      transition: all .2s;
+    }
+    .opt-btn:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-glow); }
+    .opt-btn.correct { border-color: var(--green); background: rgba(52,211,153,.12); color: var(--green); }
+    .opt-btn.wrong   { border-color: var(--red);   background: rgba(248,113,113,.12); color: var(--red); }
+    .opt-btn:disabled { cursor: default; }
+
+    /* ── BADGE ── */
+    .badge {
+      display: inline-flex; align-items:center; gap: 6px;
+      background: var(--accent-glow); border: 1px solid rgba(79,142,247,.3);
+      border-radius: 99px; padding: 4px 12px;
+      font-size: 13px; color: var(--accent);
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-deep); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+
+
+    /* ── VICTORY / GAMEOVER OVERLAY ── */
+    @keyframes popIn { from{transform:scale(.7);opacity:0} to{transform:scale(1);opacity:1} }
+    .result-modal { animation: popIn .4s cubic-bezier(.34,1.56,.64,1) forwards; }
+
+    /* ── STAR PARTICLES (victory) ── */
+    @keyframes starPop {
+      0%  { transform: translate(0,0) scale(1); opacity:1; }
+      100%{ transform: translate(var(--tx),var(--ty)) scale(0); opacity:0; }
+    }
+    .star-particle {
+      position:absolute; font-size:18px; pointer-events:none;
+      animation: starPop .8s ease-out forwards;
+    }
+
+    /* ── NAV BACK ── */
+    .nav-back {
+      display:inline-flex; align-items:center; gap:6px;
+      color: var(--text-muted); font-size:14px; cursor:pointer;
+      border:none; background:none; font-family:'Outfit',sans-serif;
+      transition: color .2s;
+    }
+    .nav-back:hover { color: var(--accent); }
+
+    /* ── DIVIDER ── */
+    .divider { border:none; border-top:1px solid var(--border); }
+
+    /* ── SLIDE DOWN ── */
+    @keyframes slideDown {
+      from { opacity:0; transform:translateY(-8px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    /* ── TAG in summary ── */
+    .tag-num {
+      display:inline-flex; align-items:center; justify-content:center;
+      width:24px; height:24px; border-radius:50%;
+      background: var(--accent-glow); border:1px solid rgba(79,142,247,.3);
+      font-size:12px; color:var(--accent); flex-shrink:0; margin-top:2px;
+    }
+
+    /* ── MOBILE FIXES ── */
+    @media (max-width: 480px) {
+      .btn-primary, .btn-secondary { padding: 12px 16px; font-size: 14px; }
+      .btn-menu { padding: 16px 18px; }
+      .card { border-radius: 12px; }
+      .opt-btn { padding: 12px 14px; font-size: 14px; }
+    }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     PAGE 1 · LANDING
+═══════════════════════════════════════════ -->
+<div id="page-landing" class="page active flex-col min-h-screen items-center justify-center px-4 py-12">
+  <div style="max-width:620px;width:100%;">
+
+    <!-- Logo / Header -->
+    <div class="text-center mb-10">
+      <div class="mono text-xs tracking-widest mb-3" style="color:var(--text-muted);">✦ INFORMATIKA PROJECT ✦</div>
+
+      <!-- Logo Icon — ganti emoji di sini sesuai keinginan -->
+      <div style="margin-bottom:14px;">
+        <div style="width:80px;height:80px;border-radius:16px;overflow:hidden;margin:0 auto;">
+  <img src="logo.png" style="width:100%;height:100%;object-fit:contain;" />
+</div>
+      </div>
+
+      <h1 class="mono font-bold mb-2" style="font-size:clamp(2rem,8vw,2.8rem);color:var(--text-main);">
+        Quiz<span style="color:var(--accent);">zlash!</span>
+      </h1>
+      <p style="color:var(--text-muted);font-size:15px;">Masukkan materi, biarkan AI jadi senjata belajarmu.</p>
+    </div>
+
+    <!-- Input Card -->
+    <div class="card p-6" style="gap:0;">
+
+      <!-- Text Input -->
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:10px;font-weight:500;">📝 Tulis atau paste materi pelajaranmu</div>
+      <textarea id="input-text" rows="8"
+        placeholder="Contoh: Taksonomi adalah ilmu yang mempelajari pengelompokan makhluk hidup. Sistem klasifikasi terdiri dari Kingdom, Filum, Kelas, Ordo, Famili, Genus, dan Spesies..."></textarea>
+
+      <hr class="divider my-5" />
+
+      <!-- Generate Button -->
+      <button class="btn-primary w-full" style="font-size:16px;padding:15px;" onclick="startGenerate()">
+        🚀 Generate Materi
+      </button>
+    </div>
+
+    <p class="text-center mt-5" style="font-size:12px;color:var(--text-muted);">
+      Dibuat oleh <span style="color:var(--accent);">Gilang Anggara</span> &amp; <span style="color:var(--accent);">All Hafiz</span> · Tugas Informatika XII.1
+    </p>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     PAGE: LOADING
+═══════════════════════════════════════════ -->
+<div id="page-loading" class="page flex-col min-h-screen items-center justify-center px-4">
+  <div style="text-align:center;">
+    <div class="dot-flashing mb-8"><span></span><span></span><span></span></div>
+    <h2 class="mono text-xl mb-2" style="color:var(--text-main);">AI sedang membaca materimu…</h2>
+    <p style="color:var(--text-muted);font-size:14px;" id="loading-hint">Membuat ringkasan & 10 soal kuis...</p>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     PAGE 2 · DASHBOARD MENU
+═══════════════════════════════════════════ -->
+<div id="page-dashboard" class="page flex-col min-h-screen items-center justify-start px-4 py-12">
+  <div style="max-width:560px;width:100%;">
+    <div class="badge mb-6">✦ Materi Berhasil Diproses</div>
+    <h2 class="mono text-3xl font-bold mb-2" style="color:var(--text-main);">Dashboard</h2>
+    <p style="color:var(--text-muted);font-size:15px;margin-bottom:32px;">Pilih mode belajar yang kamu inginkan.</p>
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <button class="btn-menu" onclick="showPage('page-summary')">
+        <div style="font-size:22px;margin-bottom:6px;">📖</div>
+        <div style="font-weight:600;font-size:16px;margin-bottom:4px;">Baca Summary</div>
+        <div style="font-size:13px;color:var(--text-muted);">Ringkasan materi dalam 3–5 poin utama.</div>
+      </button>
+
+      <button class="btn-menu" onclick="showPage('page-review')">
+        <div style="font-size:22px;margin-bottom:6px;">🔍</div>
+        <div style="font-weight:600;font-size:16px;margin-bottom:4px;">Review Soal & Jawaban</div>
+        <div style="font-size:13px;color:var(--text-muted);">10 soal kuis lengkap beserta kunci jawabannya.</div>
+      </button>
+
+      <button class="btn-menu" onclick="showPage('page-boss-select')">
+        <div style="font-size:22px;margin-bottom:6px;">🎮</div>
+        <div style="font-weight:600;font-size:16px;margin-bottom:4px;">Play Game Battle</div>
+        <div style="font-size:13px;color:var(--text-muted);">Lawan Boss! Jawab 10 soal, kalahkan musuhmu.</div>
+      </button>
+
+    </div>
+
+    <div class="text-center mt-10">
+      <button class="btn-secondary" onclick="showPage('page-landing');resetAll()">↩ Generate Materi Baru</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     PAGE: SUMMARY
+═══════════════════════════════════════════ -->
+<div id="page-summary" class="page flex-col min-h-screen items-center justify-start px-4 py-12">
+  <div style="max-width:640px;width:100%;">
+    <button class="nav-back mb-6" onclick="showPage('page-dashboard')">← Kembali ke Menu Utama</button>
+    <h2 class="mono text-2xl font-bold mb-6" style="color:var(--text-main);">📖 Summary Materi</h2>
+    <div class="card p-6" id="summary-content">
+      <!-- filled by JS -->
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     PAGE: REVIEW SOAL
+═══════════════════════════════════════════ -->
+<div id="page-review" class="page flex-col min-h-screen items-center justify-start px-4 py-12">
+  <div style="max-width:640px;width:100%;">
+    <button class="nav-back mb-6" onclick="showPage('page-dashboard')">← Kembali ke Menu Utama</button>
+    <h2 class="mono text-2xl font-bold mb-6" style="color:var(--text-main);">🔍 Review Soal & Jawaban</h2>
+    <div id="review-content" style="display:flex;flex-direction:column;gap:14px;">
+      <!-- filled by JS -->
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     PAGE 3 · BOSS SELECTION
+═══════════════════════════════════════════ -->
+<div id="page-boss-select" class="page flex-col min-h-screen items-center justify-center px-4 py-12">
+  <div style="max-width:500px;width:100%;">
+    <button class="nav-back mb-6" onclick="showPage('page-dashboard')">← Kembali ke Menu Utama</button>
+    <h2 class="mono text-2xl font-bold mb-2" style="color:var(--text-main);">⚔️ Pilih Boss-mu</h2>
+    <p style="color:var(--text-muted);font-size:14px;margin-bottom:28px;">Boss yang kamu pilih akan menjadi lawanmu dalam arena.</p>
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+
+      <!-- Default Boss -->
+      <button class="btn-menu" onclick="selectBoss('default')" style="display:flex;align-items:center;gap:16px;">
+        <div style="width:56px;height:56px;border-radius:10px;overflow:hidden;background:var(--bg-hover);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <!-- LANG, GANTI PATH GAMBAR KAMU DI SINI -->
+          <img id="preview-default" src="default-boss.png" alt="Default Boss"
+               style="width:100%;height:100%;object-fit:cover;"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"/>
+          <div style="display:none;font-size:26px;align-items:center;justify-content:center;width:100%;height:100%;">👾</div>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:15px;">Gunakan Boss Default</div>
+          <div style="font-size:13px;color:var(--text-muted);">default-boss.png dari folder proyek</div>
+        </div>
+      </button>
+
+      <!-- Custom Boss Upload -->
+      <div class="card p-5">
+        <div style="font-weight:600;font-size:15px;margin-bottom:4px;">🎨 Upload Boss Custom</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">Upload gambar Pixel Art kamu. Tersimpan otomatis!</div>
+
+        <div id="custom-boss-preview" style="display:none;text-align:center;margin-bottom:12px;">
+          <img id="custom-boss-img" style="max-height:100px;border-radius:8px;border:1px solid var(--border);"/>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn-secondary" style="flex:1;" onclick="document.getElementById('boss-file-input').click()">
+            📁 Pilih Gambar
+          </button>
+          <button id="btn-use-custom" class="btn-primary" style="flex:1;display:none;" onclick="selectBoss('custom')">
+            ✅ Pakai Boss Ini
+          </button>
+        </div>
+        <input type="file" id="boss-file-input" accept="image/*" style="display:none" onchange="handleBossUpload(event)" />
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     PAGE 4 · ARENA BATTLE
+═══════════════════════════════════════════ -->
+<div id="page-arena" class="page flex-col min-h-screen items-center justify-start px-4 py-10">
+  <div style="max-width:640px;width:100%;">
+
+    <!-- Top Bar -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <button class="nav-back" onclick="confirmBackToMenu()">← Menu</button>
+      <div id="hearts-display" style="display:flex;gap:6px;"></div>
+    </div>
+
+    <!-- Progress -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+      <div class="prog-bar" style="flex:1;">
+        <div class="prog-fill" id="battle-progress" style="width:0%"></div>
+      </div>
+      <span class="mono" style="font-size:13px;color:var(--text-muted);" id="battle-counter">0/10</span>
+    </div>
+
+    <!-- Boss Area -->
+    <div style="text-align:center;margin-bottom:24px;">
+      <div style="display:inline-block;position:relative;">
+        <img id="arena-boss-img" src=""
+             style="max-height:150px;max-width:220px;object-fit:contain;border-radius:12px;
+                    border:1px solid var(--border);background:var(--bg-card);"
+             onerror="this.style.display='none';document.getElementById('arena-boss-fallback').style.display='flex'"/>
+        <div id="arena-boss-fallback"
+             style="display:none;width:160px;height:150px;align-items:center;justify-content:center;
+                    font-size:80px;border-radius:12px;border:1px solid var(--border);background:var(--bg-card);
+                    margin:0 auto;">👾</div>
+      </div>
+      <div style="margin-top:10px;" id="boss-hp-bar">
+        <div class="mono text-xs mb-1" style="color:var(--text-muted);">BOSS HP</div>
+        <div class="prog-bar" style="max-width:220px;margin:0 auto;">
+          <div id="boss-hp-fill" class="prog-fill" style="width:100%;background:var(--red);"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Score -->
+    <div style="display:flex;gap:12px;justify-content:center;margin-bottom:20px;">
+      <div class="badge" style="gap:4px;">⚔️ Benar: <span id="score-correct">0</span></div>
+      <div class="badge" style="gap:4px;">💀 Salah: <span id="score-wrong">0</span></div>
+    </div>
+
+    <!-- Question Card -->
+    <div class="card p-6 mb-4" id="question-card">
+      <div class="mono text-xs mb-3" style="color:var(--text-muted);" id="q-label">SOAL 1 dari 10</div>
+      <p style="font-size:16px;font-weight:500;line-height:1.6;margin-bottom:20px;" id="q-text"></p>
+      <div id="options-container" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+
+    <!-- Feedback -->
+    <div id="feedback-bar" style="display:none;padding:12px 16px;border-radius:10px;font-size:14px;font-weight:500;margin-bottom:12px;text-align:center;transition:all .3s;"></div>
+
+    <!-- Explanation Card -->
+    <div id="explanation-card" style="display:none;margin-bottom:14px;
+         border-radius:12px;border:1px solid rgba(251,191,36,.25);
+         background:rgba(251,191,36,.06);overflow:hidden;">
+      <div style="padding:10px 16px;border-bottom:1px solid rgba(251,191,36,.15);
+           display:flex;align-items:center;gap:8px;">
+        <span style="font-size:14px;">💡</span>
+        <span style="font-size:12px;font-weight:600;color:#fbbf24;font-family:'Space Mono',monospace;letter-spacing:.05em;">PEMBAHASAN</span>
+      </div>
+      <div id="explanation-text" style="padding:14px 16px;font-size:14px;line-height:1.8;color:var(--text-main);"></div>
+    </div>
+
+    <!-- Next Button -->
+    <div style="text-align:center;">
+      <button id="btn-next" class="btn-primary" style="display:none;min-width:160px;" onclick="nextQuestion()">
+        Soal Berikutnya →
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     RESULT OVERLAY (Victory / Game Over)
+═══════════════════════════════════════════ -->
+<div id="result-overlay" style="display:none;position:fixed;inset:0;background:rgba(13,17,23,.92);
+     backdrop-filter:blur(8px);z-index:100;align-items:center;justify-content:center;">
+  <div id="result-modal" class="card result-modal p-8" style="max-width:400px;width:90%;text-align:center;">
+    <div id="result-emoji" style="font-size:64px;margin-bottom:16px;"></div>
+    <h2 id="result-title" class="mono text-3xl font-bold mb-3"></h2>
+    <p id="result-subtitle" style="color:var(--text-muted);font-size:15px;margin-bottom:8px;"></p>
+    <p id="result-score" class="mono" style="font-size:20px;color:var(--accent);margin-bottom:28px;"></p>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn-primary" onclick="restartBattle()">🔄 Main Lagi</button>
+      <button class="btn-secondary" onclick="goToDashboard()">↩ Kembali ke Menu</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════
+     JAVASCRIPT
+═══════════════════════════════════════════ -->
+<script>
+  // ─────────────────────────────────────────────
+  //  CONFIG — GANTI API KEY GROQ KAMU DI SINI
+  //  Daftar gratis di: https://console.groq.com
+  // ─────────────────────────────────────────────
+  const API_KEY           = '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';
+  const GROQ_URL          = 'https://api.groq.com/openai/v1/chat/completions';
+  const GROQ_MODEL_TEXT   = 'llama-3.1-8b-instant';      // Untuk input teks
+
+  // ─────────────────────────────────────────────
+  //  STATE
+  // ─────────────────────────────────────────────
+  let aiData     = null;   // { summary:[], quiz:[] }
+  let customBossBase64    = null;
+  let selectedBossMode    = 'default';
+
+  // Battle state
+  let battleQuestions = [];
+  let currentQ        = 0;
+  let hearts          = 3;
+  let scoreCorrect    = 0;
+  let scoreWrong      = 0;
+
+  // ─────────────────────────────────────────────
+  //  PAGE NAVIGATION
+  // ─────────────────────────────────────────────
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => {
+      p.classList.remove('active');
+      p.style.display = 'none';
+    });
+    const el = document.getElementById(id);
+    el.style.display = 'flex';
+    requestAnimationFrame(() => el.classList.add('active'));
+
+    // On navigate, populate dynamic pages
+    if (id === 'page-summary')  renderSummary();
+    if (id === 'page-review')   renderReview();
+    if (id === 'page-boss-select') loadCustomBossPreview();
+  }
+
+  // ─────────────────────────────────────────────
+  //  (File upload dihapus — input teks saja)
+  // ─────────────────────────────────────────────
+
+  // ─────────────────────────────────────────────
+  //  BOSS UPLOAD
+  // ─────────────────────────────────────────────
+  function handleBossUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      customBossBase64 = e.target.result; // data URL
+      localStorage.setItem('lp_custom_boss', customBossBase64);
+      document.getElementById('custom-boss-img').src = customBossBase64;
+      document.getElementById('custom-boss-preview').style.display = 'block';
+      document.getElementById('btn-use-custom').style.display = 'inline-flex';
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function loadCustomBossPreview() {
+    const saved = localStorage.getItem('lp_custom_boss');
+    if (saved) {
+      customBossBase64 = saved;
+      document.getElementById('custom-boss-img').src = saved;
+      document.getElementById('custom-boss-preview').style.display = 'block';
+      document.getElementById('btn-use-custom').style.display = 'inline-flex';
+    }
+  }
+
+  function selectBoss(mode) {
+    selectedBossMode = mode;
+    startBattle();
+  }
+
+
+  // ─────────────────────────────────────────────
+  //  SANITASI LaTeX → Unicode/teks biasa
+  // ─────────────────────────────────────────────
+  function sanitizeLatex(str) {
+    return str
+      // Hapus environment math $...$ dan \(...\) dan \[...\]
+      .replace(/\\\[[\s\S]*?\\\]/g, '')
+      .replace(/\\\([\s\S]*?\\\)/g, '')
+      .replace(/\$\$[\s\S]*?\$\$/g, '')
+      .replace(/\$([^$]+)\$/g, '$1')
+
+      // Pecahan \frac{a}{b} → a/b
+      .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1)/($2)')
+
+      // Akar \sqrt{x} → √x
+      .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
+      .replace(/\\sqrt\s/g, '√')
+
+      // Pangkat ^{n} → ⁿ (common cases) lalu fallback ^n
+      .replace(/\^\{2\}/g, '²').replace(/\^\{3\}/g, '³')
+      .replace(/\^\{([^}]+)\}/g, '^$1')
+      .replace(/\^2(?!\d)/g, '²').replace(/\^3(?!\d)/g, '³')
+
+      // Subscript _{n} → common cases
+      .replace(/\_\{1\}/g, '₁').replace(/\_\{2\}/g, '₂')
+      .replace(/\_\{3\}/g, '₃').replace(/\_\{0\}/g, '₀')
+      .replace(/\_\{([^}]+)\}/g, '_$1')
+
+      // Operator
+      .replace(/\\times/g, '×')
+      .replace(/\\cdot/g, '·')
+      .replace(/\\div/g, '÷')
+      .replace(/\\pm/g, '±')
+      .replace(/\\mp/g, '∓')
+      .replace(/\\approx/g, '≈')
+      .replace(/\\neq/g, '≠')
+      .replace(/\\leq/g, '≤')
+      .replace(/\\geq/g, '≥')
+      .replace(/\\infty/g, '∞')
+      .replace(/\\sum/g, '∑')
+      .replace(/\\int/g, '∫')
+      .replace(/\\to/g, '→')
+      .replace(/\\rightarrow/g, '→')
+      .replace(/\\leftarrow/g, '←')
+
+      // Huruf Yunani
+      .replace(/\\alpha/g, 'α').replace(/\\beta/g, 'β')
+      .replace(/\\gamma/g, 'γ').replace(/\\delta/g, 'δ')
+      .replace(/\\epsilon/g, 'ε').replace(/\\theta/g, 'θ')
+      .replace(/\\lambda/g, 'λ').replace(/\\mu/g, 'μ')
+      .replace(/\\nu/g, 'ν').replace(/\\pi/g, 'π')
+      .replace(/\\rho/g, 'ρ').replace(/\\sigma/g, 'σ')
+      .replace(/\\tau/g, 'τ').replace(/\\phi/g, 'φ')
+      .replace(/\\omega/g, 'ω').replace(/\\Delta/g, 'Δ')
+      .replace(/\\Sigma/g, 'Σ').replace(/\\Omega/g, 'Ω')
+      .replace(/\\Gamma/g, 'Γ').replace(/\\Lambda/g, 'Λ')
+      .replace(/\\Phi/g, 'Φ').replace(/\\Psi/g, 'Ψ')
+
+      // Hapus backslash tersisa yang tidak dikenali
+      .replace(/\\([a-zA-Z]+)/g, '$1')
+
+      // Bersihkan kurung kurawal sisa { }
+      .replace(/\{([^{}]+)\}/g, '$1')
+      .replace(/[{}]/g, '');
+  }
+
+  // ─────────────────────────────────────────────
+  //  GENERATE (Call Groq)
+  // ─────────────────────────────────────────────
+  async function startGenerate() {
+    const text = document.getElementById('input-text').value.trim();
+
+    if (!text) {
+      alert('Tolong isi materi terlebih dahulu!');
+      return;
+    }
+
+    showPage('page-loading');
+
+    const systemPrompt = `Kamu adalah AI tutor ahli. Analisis materi dan kembalikan HANYA JSON murni tanpa teks lain, tanpa markdown, tanpa backtick.
+
+FORMAT JSON WAJIB:
+{"summary":[{"title":"...","content":"..."},...], "quiz":[{"q":"...","o":["...","...","...","..."],"a":0,"e":"..."},...]}
+
+═══ ATURAN SUMMARY ═══
+Buat TEPAT 5 objek summary. Setiap objek:
+- "title": 3-6 kata, SPESIFIK ke topik. Contoh BAGUS: "Rumus Gerak Lurus Beraturan", "7 Tingkatan Hierarki Taksonomi". Contoh BURUK: "Pengertian", "Manfaat"
+- "content": minimal 50 kata, padat dan berisi. Wajib cantumkan:
+  * Fakta/angka/nama spesifik dari materi
+  * JIKA ada rumus di materi: tulis rumusnya secara eksplisit, contoh: "Rumus GLB: s = v × t, di mana s = jarak (m), v = kecepatan (m/s), t = waktu (s)"
+  * DILARANG kalimat pembuka generik seperti "materi ini membahas..." atau "penting dipahami bahwa..."
+
+Contoh content BAGUS (fisika):
+"Gerak Lurus Beraturan (GLB) adalah gerak dengan kecepatan konstan dan percepatan nol. Rumus utama: s = v × t, di mana s adalah jarak tempuh (meter), v adalah kecepatan (m/s), dan t adalah waktu (sekon). Contoh: benda bergerak 10 m/s selama 5 s menempuh jarak 50 m. Grafik v-t GLB berupa garis horizontal lurus."
+
+Contoh content BURUK (DILARANG):
+"GLB adalah gerak lurus dengan kecepatan tetap. Hal ini penting untuk dipahami karena merupakan dasar kinematika."
+
+═══ ATURAN QUIZ ═══
+Buat TEPAT 10 soal beragam. Setiap soal punya field "e" (explanation/pembahasan):
+- "q": pertanyaan lengkap dengan satuan jika hitungan
+- "o": 4 opsi jawaban. Teori: teks ["fotosintesis","respirasi","transpirasi","gutasi"]. Hitungan: angka saja ["10","20","30","40"]
+- "a": indeks jawaban benar (0-3)
+- "e": pembahasan SEDANG 3-4 kalimat. Untuk hitungan: tulis langkah penyelesaian step-by-step. Untuk teori: jelaskan kenapa jawaban benar dan kenapa opsi lain salah
+
+Contoh soal HITUNGAN dengan explanation:
+{"q":"Sebuah benda bermassa 5 kg diberi gaya 20 N. Berapakah percepatannya (m/s²)?","o":["2","4","10","100"],"a":1,"e":"Gunakan Hukum Newton II: F = m × a, maka a = F/m. Substitusi nilai: a = 20 N / 5 kg = 4 m/s². Jadi percepatan benda adalah 4 m/s². Opsi lain salah karena hasil perhitungan F/m tidak menghasilkan nilai tersebut."}
+
+Contoh soal TEORI dengan explanation:
+{"q":"Proses fotosintesis menghasilkan...","o":["glukosa dan O₂","glukosa dan CO₂","air dan CO₂","ATP dan H₂O"],"a":0,"e":"Fotosintesis: 6CO₂ + 6H₂O + cahaya → C₆H₁₂O₆ + 6O₂. Produk akhirnya adalah glukosa (C₆H₁₂O₆) sebagai sumber energi dan oksigen (O₂) yang dilepas ke udara. CO₂ justru merupakan bahan baku, bukan produk fotosintesis."}
+
+ATURAN TAMBAHAN QUIZ:
+- Jika materi ada rumus/angka: WAJIB minimal 3 soal hitungan dengan angka nyata
+- Gunakan simbol Unicode: ² ³ √ π ° ≈ ± × ÷ ≤ ≥ ∑ → ₂
+- Pecahan tulis: 1/2, 3/4, v₁/v₂
+
+LARANGAN KERAS — JANGAN PERNAH gunakan format LaTeX apapun:
+✗ DILARANG: \sqrt{}, \frac{}{}, \times, \cdot, \gamma, \alpha, \beta, \Delta, $...$, \(...\), \[...\], ^{}, _{}
+✓ WAJIB PAKAI SEBAGAI GANTINYA:
+  - Akar kuadrat: tulis √x atau sqrt(x)
+  - Pecahan: tulis a/b
+  - Pangkat: tulis x² x³ (Unicode superscript) atau x^2
+  - Subscript: tulis v₁ v₂ atau v1 v2
+  - Perkalian: tulis × atau *
+  - Huruf Yunani: tulis simbolnya langsung → α β γ δ θ λ μ π σ ω Δ Σ
+  - Tidak boleh ada backslash \ dalam output JSON sama sekali
+
+OUTPUT: HANYA JSON valid. Tidak ada teks apapun sebelum atau sesudah JSON.`;
+
+    const selectedModel = GROQ_MODEL_TEXT;
+    const userContent   = `Analisis materi ini dan buat summary + quiz sesuai instruksi. Output HANYA JSON:\n\n${text}`;
+
+    try {
+      const resp = await fetch(GROQ_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${API_KEY}`
+        },
+        body: JSON.stringify({
+          model: selectedModel,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user',   content: userContent  }
+          ],
+          temperature: 0.5,
+          max_tokens: 3000
+        })
+      });
+
+      if (!resp.ok) {
+        const errData = await resp.json();
+        throw new Error(errData.error?.message || `HTTP ${resp.status}`);
+      }
+
+      const data = await resp.json();
+      let rawText = data.choices?.[0]?.message?.content || '';
+
+      // Strip markdown code fences if any
+      rawText = rawText.replace(/```json\s*/gi, '').replace(/```\s*/gi, '').trim();
+
+      // ── Ekstrak JSON murni: ambil { ... } terluar, buang teks di luar ──
+      const firstBrace = rawText.indexOf('{');
+      const lastBrace  = rawText.lastIndexOf('}');
+      if (firstBrace === -1 || lastBrace === -1)
+        throw new Error('AI tidak mengembalikan JSON. Coba generate ulang.');
+      rawText = rawText.slice(firstBrace, lastBrace + 1);
+
+      // ── Hapus karakter kontrol tersembunyi ──
+      rawText = rawText.replace(/[\u0000-\u001F\u007F]/g, ' ');
+
+      // ── Parse JSON dulu ──
+      aiData = JSON.parse(rawText);
+
+      // ── Sanitasi LaTeX di isi string (bukan di JSON mentah!) ──
+      function sanitizeObj(obj) {
+        if (typeof obj === 'string') return sanitizeLatex(obj);
+        if (Array.isArray(obj)) return obj.map(sanitizeObj);
+        if (obj && typeof obj === 'object') {
+          const out = {};
+          for (const k in obj) out[k] = sanitizeObj(obj[k]);
+          return out;
+        }
+        return obj;
+      }
+      aiData = sanitizeObj(aiData);
+
+      if (!aiData.summary || !aiData.quiz || aiData.quiz.length < 10) {
+        throw new Error('Format JSON dari AI tidak valid.');
+      }
+
+      showPage('page-dashboard');
+
+    } catch (err) {
+      showPage('page-landing');
+      alert(`❌ Gagal memproses:\n${err.message}\n\nPastikan API Key sudah benar dan materi tidak kosong.`);
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  //  RENDER SUMMARY
+  // ─────────────────────────────────────────────
+  function renderSummary() {
+    if (!aiData) return;
+    const el = document.getElementById('summary-content');
+    el.innerHTML = aiData.summary.map((pt, i) => {
+      // Support both old string format and new {title, content} format
+      const title   = typeof pt === 'object' ? pt.title   : `Poin ${i + 1}`;
+      const content = typeof pt === 'object' ? pt.content : pt;
+      return `
+      <div style="${i > 0 ? 'padding-top:22px;border-top:1px solid var(--border);margin-top:22px;' : ''}">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div class="tag-num">${i + 1}</div>
+          <h3 style="font-size:15px;font-weight:700;color:var(--accent);line-height:1.4;">${title}</h3>
+        </div>
+        <p style="font-size:14.5px;line-height:1.8;color:var(--text-main);padding-left:34px;">${content}</p>
+      </div>`;
+    }).join('');
+  }
+
+  // ─────────────────────────────────────────────
+  //  RENDER REVIEW
+  // ─────────────────────────────────────────────
+  function renderReview() {
+    if (!aiData) return;
+    const el = document.getElementById('review-content');
+    el.innerHTML = aiData.quiz.map((q, i) => {
+      const correctLetter = String.fromCharCode(65 + q.a);
+      const opts = q.o.map((o, oi) => {
+        const isCorrect = oi === q.a;
+        return `<div style="padding:8px 12px;border-radius:8px;font-size:14px;
+          background:${isCorrect ? 'rgba(52,211,153,.10)' : 'transparent'};
+          border:1px solid ${isCorrect ? 'var(--green)' : 'var(--border)'};
+          color:${isCorrect ? 'var(--green)' : 'var(--text-muted)'};
+          margin-bottom:6px;">
+          ${o} ${isCorrect ? '✓' : ''}
+        </div>`;
+      }).join('');
+      const explanationBlock = q.e ? `
+        <div style="margin-top:12px;border-radius:10px;border:1px solid rgba(251,191,36,.25);background:rgba(251,191,36,.06);">
+          <div style="padding:8px 14px;border-bottom:1px solid rgba(251,191,36,.15);display:flex;align-items:center;gap:6px;">
+            <span style="font-size:13px;">💡</span>
+            <span class="mono" style="font-size:11px;color:#fbbf24;letter-spacing:.05em;">PEMBAHASAN</span>
+          </div>
+          <p style="padding:12px 14px;font-size:13.5px;line-height:1.8;color:var(--text-main);">${q.e}</p>
+        </div>` : '';
+      return `<div class="card p-5">
+        <div class="mono text-xs mb-2" style="color:var(--text-muted);">SOAL ${i + 1}</div>
+        <p style="font-weight:500;font-size:15px;margin-bottom:14px;line-height:1.6;">${q.q}</p>
+        ${opts}
+        <div style="margin-top:10px;padding:8px 12px;border-radius:8px;background:rgba(79,142,247,.1);border:1px solid rgba(79,142,247,.3);">
+          <span class="mono" style="font-size:12px;color:var(--accent);">✓ JAWABAN BENAR: ${q.o[q.a]}</span>
+        </div>
+        ${explanationBlock}
+      </div>`;
+    }).join('');
+  }
+
+  // ─────────────────────────────────────────────
+  //  START BATTLE
+  // ─────────────────────────────────────────────
+  function startBattle() {
+    // Shuffle quiz
+    battleQuestions = [...aiData.quiz].sort(() => Math.random() - 0.5);
+    currentQ     = 0;
+    hearts       = 3;
+    scoreCorrect = 0;
+    scoreWrong   = 0;
+
+    // Set boss image
+    const arenaImg      = document.getElementById('arena-boss-img');
+    const arenaFallback = document.getElementById('arena-boss-fallback');
+    arenaImg.style.display      = 'block';
+    arenaFallback.style.display = 'none';
+
+    if (selectedBossMode === 'custom' && customBossBase64) {
+      arenaImg.src = customBossBase64;
+    } else {
+      // LANG, GANTI PATH GAMBAR DEFAULT BOSS KAMU DI SINI
+      arenaImg.src = 'default-boss.png';
+    }
+
+    updateHeartsUI();
+    document.getElementById('result-overlay').style.display = 'none';
+    showPage('page-arena');
+    renderQuestion();
+  }
+
+  // ─────────────────────────────────────────────
+  //  RENDER QUESTION
+  // ─────────────────────────────────────────────
+  function renderQuestion() {
+    const q = battleQuestions[currentQ];
+    document.getElementById('q-label').textContent  = `SOAL ${currentQ + 1} dari 10`;
+    document.getElementById('q-text').textContent   = q.q;
+    document.getElementById('battle-counter').textContent = `${currentQ + 1}/10`;
+    document.getElementById('battle-progress').style.width = `${(currentQ / 10) * 100}%`;
+    document.getElementById('score-correct').textContent   = scoreCorrect;
+    document.getElementById('score-wrong').textContent     = scoreWrong;
+    document.getElementById('feedback-bar').style.display     = 'none';
+    document.getElementById('btn-next').style.display         = 'none';
+    document.getElementById('explanation-card').style.display = 'none';
+
+    // Update Boss HP
+    const hpPct = Math.max(0, ((10 - scoreCorrect) / 10) * 100);
+    document.getElementById('boss-hp-fill').style.width = hpPct + '%';
+
+    const container = document.getElementById('options-container');
+    container.innerHTML = q.o.map((opt, idx) =>
+      `<button class="opt-btn" onclick="answerQuestion(${idx})">${opt}</button>`
+    ).join('');
+  }
+
+  // ─────────────────────────────────────────────
+  //  ANSWER QUESTION
+  // ─────────────────────────────────────────────
+  function answerQuestion(chosenIdx) {
+    const q = battleQuestions[currentQ];
+    const btns = document.querySelectorAll('.opt-btn');
+    btns.forEach(b => b.disabled = true);
+
+    const isCorrect = chosenIdx === q.a;
+    const feedback  = document.getElementById('feedback-bar');
+
+    btns[q.a].classList.add('correct');
+    if (!isCorrect) btns[chosenIdx].classList.add('wrong');
+
+    if (isCorrect) {
+      scoreCorrect++;
+      feedback.style.display     = 'block';
+      feedback.style.background  = 'rgba(52,211,153,.12)';
+      feedback.style.border      = '1px solid var(--green)';
+      feedback.style.color       = 'var(--green)';
+      feedback.textContent       = '⚔️ Serangan Telak! Jawaban Benar!';
+      animateBoss('shake');
+    } else {
+      hearts--;
+      scoreWrong++;
+      feedback.style.display     = 'block';
+      feedback.style.background  = 'rgba(248,113,113,.12)';
+      feedback.style.border      = '1px solid var(--red)';
+      feedback.style.color       = 'var(--red)';
+      feedback.textContent       = '💔 Jawaban Salah! Nyawa berkurang.';
+      animateBoss('blink');
+      updateHeartsUI();
+    }
+
+    // Show explanation if available
+    const expCard = document.getElementById('explanation-card');
+    const expText = document.getElementById('explanation-text');
+    if (q.e) {
+      expText.textContent = q.e;
+      expCard.style.display = 'block';
+      expCard.style.animation = 'none';
+      void expCard.offsetWidth;
+      expCard.style.animation = 'slideDown .3s ease forwards';
+    } else {
+      expCard.style.display = 'none';
+    }
+
+    document.getElementById('score-correct').textContent = scoreCorrect;
+    document.getElementById('score-wrong').textContent   = scoreWrong;
+
+    // Update Boss HP
+    const hpPct = Math.max(0, ((10 - scoreCorrect) / 10) * 100);
+    document.getElementById('boss-hp-fill').style.width = hpPct + '%';
+
+    // Check game over (nyawa habis)
+    if (hearts < 1) {
+      setTimeout(() => showResult('gameover'), 900);
+      return;
+    }
+
+    // Advance
+    if (currentQ >= 9) {
+      // Last question answered
+      setTimeout(() => {
+        if (scoreCorrect >= 7) showResult('victory');
+        else showResult('gameover');
+      }, 900);
+    } else {
+      document.getElementById('btn-next').style.display = 'inline-block';
+    }
+  }
+
+  function nextQuestion() {
+    currentQ++;
+    renderQuestion();
+  }
+
+  // ─────────────────────────────────────────────
+  //  BOSS ANIMATION
+  // ─────────────────────────────────────────────
+  function animateBoss(type) {
+    const img = document.getElementById('arena-boss-img');
+    const fallback = document.getElementById('arena-boss-fallback');
+    const target = img.style.display !== 'none' ? img : fallback;
+
+    target.classList.remove('boss-shake', 'boss-blink');
+    void target.offsetWidth; // reflow
+    target.classList.add(type === 'shake' ? 'boss-shake' : 'boss-blink');
+    setTimeout(() => target.classList.remove('boss-shake', 'boss-blink'), 500);
+  }
+
+  // ─────────────────────────────────────────────
+  //  HEARTS UI
+  // ─────────────────────────────────────────────
+  function updateHeartsUI() {
+    const el = document.getElementById('hearts-display');
+    let html = '';
+    for (let i = 0; i < 3; i++) {
+      html += `<span class="heart ${i >= hearts ? 'lost' : ''}">❤️</span>`;
+    }
+    el.innerHTML = html;
+  }
+
+  // ─────────────────────────────────────────────
+  //  SHOW RESULT
+  // ─────────────────────────────────────────────
+  function showResult(type) {
+    const overlay = document.getElementById('result-overlay');
+    const modal   = document.getElementById('result-modal');
+
+    overlay.style.display = 'flex';
+    modal.style.animation = 'none';
+    void modal.offsetWidth;
+    modal.style.animation = 'popIn .4s cubic-bezier(.34,1.56,.64,1) forwards';
+
+    if (type === 'victory') {
+      document.getElementById('result-emoji').textContent    = '🏆';
+      document.getElementById('result-title').textContent   = 'VICTORY!';
+      document.getElementById('result-title').style.color   = 'var(--gold)';
+      document.getElementById('result-subtitle').textContent = 'Kamu berhasil mengalahkan Boss!';
+      document.getElementById('result-score').textContent   = `${scoreCorrect} / 10 Benar`;
+      spawnStars();
+    } else {
+      document.getElementById('result-emoji').textContent    = hearts < 1 ? '💀' : '😔';
+      document.getElementById('result-title').textContent   = 'GAME OVER';
+      document.getElementById('result-title').style.color   = 'var(--red)';
+      document.getElementById('result-subtitle').textContent = hearts < 1
+        ? 'Nyawamu habis! Boss terlalu kuat.'
+        : 'Skor kurang dari 7. Pelajari lagi materinya!';
+      document.getElementById('result-score').textContent   = `${scoreCorrect} / 10 Benar`;
+    }
+  }
+
+  function spawnStars() {
+    const overlay = document.getElementById('result-overlay');
+    const icons   = ['⭐','✨','🌟','💫','🎉'];
+    for (let i = 0; i < 12; i++) {
+      const star = document.createElement('div');
+      star.className = 'star-particle';
+      star.textContent = icons[Math.floor(Math.random() * icons.length)];
+      const tx = (Math.random() - .5) * 300;
+      const ty = (Math.random() - 1.2) * 300;
+      star.style.cssText = `--tx:${tx}px;--ty:${ty}px;left:50%;top:50%;transform-origin:center;`;
+      star.style.animationDelay = Math.random() * .4 + 's';
+      overlay.appendChild(star);
+      setTimeout(() => star.remove(), 1400);
+    }
+  }
+
+  // ─────────────────────────────────────────────
+  //  NAVIGATION HELPERS
+  // ─────────────────────────────────────────────
+  function restartBattle() {
+    document.getElementById('result-overlay').style.display = 'none';
+    startBattle();
+  }
+
+  function goToDashboard() {
+    document.getElementById('result-overlay').style.display = 'none';
+    showPage('page-dashboard');
+  }
+
+  function confirmBackToMenu() {
+    if (confirm('Kembali ke Menu Utama? Progress battle akan hilang.')) {
+      document.getElementById('result-overlay').style.display = 'none';
+      showPage('page-dashboard');
+    }
+  }
+
+  function resetAll() {
+    aiData = null;
+    document.getElementById('input-text').value = '';
+  }
+
+  // ─────────────────────────────────────────────
+  //  INIT
+  // ─────────────────────────────────────────────
+  // Load saved boss on startup
+  window.addEventListener('load', () => {
+    const saved = localStorage.getItem('lp_custom_boss');
+    if (saved) customBossBase64 = saved;
+  });
+</script>
+</body>
+</html>
